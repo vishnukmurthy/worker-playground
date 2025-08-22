@@ -13,6 +13,25 @@ export default {
   async fetch(request, env, ctx) {
     const { pathname, searchParams } = new URL(request.url);
 
+    const url = new URL(request.url);
+    
+    if (url.pathname === "/shorten") {
+      
+      const originalUrl = url.searchParams.get("url");
+      if (!originalUrl) return new Response("Missing url parameter", { status: 400 });
+      const id = randomUUID().slice(0, 6);
+      await env.URLS.put(id, originalUrl);
+      return new Response(`Short URL: https://yourdomain.com/${id}`);
+
+    } else {
+      
+      const id = url.pathname.slice(1);
+      const originalUrl = await env.URLS.get(id);
+      if (originalUrl) return Response.redirect(originalUrl, 302);
+      return new Response("URL not found", { status: 404 });
+    
+    }
+
     // Simulate some different behaviors to test observability
     if (pathname === "/ok") {
       return new Response("✅ Everything looks good!", { status: 200 });
